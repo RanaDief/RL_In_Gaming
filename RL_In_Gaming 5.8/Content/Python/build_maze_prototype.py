@@ -8,6 +8,10 @@ import unreal
 
 
 MAP_PATH = "/Game/MazeHunt/MazePrototype"
+FIRST_PERSON_GAME_MODE = (
+    "/Game/FirstPerson/Blueprints/"
+    "BP_FirstPersonGameMode.BP_FirstPersonGameMode_C"
+)
 WALL_HEIGHT = 350.0
 WALL_THICKNESS = 50.0
 CORRIDOR_WIDTH = 350.0
@@ -146,6 +150,22 @@ def build():
     global WALL_MATERIAL
 
     clear_or_create_level()
+
+    # A PlayerController is not a placeable level actor. Assigning its GameMode
+    # to this world makes Unreal spawn the existing first-person controller,
+    # character, and camera at Hider_PlayerStart when Play begins.
+    game_mode_class = unreal.load_class(None, FIRST_PERSON_GAME_MODE)
+    if not game_mode_class:
+        raise RuntimeError(
+            "Could not load the first-person GameMode: {}".format(
+                FIRST_PERSON_GAME_MODE
+            )
+        )
+    editor_world = unreal.EditorLevelLibrary.get_editor_world()
+    editor_world.get_world_settings().set_editor_property(
+        "default_game_mode",
+        game_mode_class,
+    )
 
     WALL_MATERIAL = color_material(
         "M_Maze_WallGrey", unreal.LinearColor(0.32, 0.35, 0.40, 1.0)
