@@ -163,81 +163,100 @@ def build():
         "M_Maze_Junction_Yellow", unreal.LinearColor(0.85, 0.65, 0.03, 1.0)
     )
 
-    # One continuous 3600 x 3400 floor. Coordinates: north is +Y.
+    # One continuous 5200 x 4600 floor. Coordinates: north is +Y.
     cube(
         "Maze_Floor",
         (0.0, 0.0, -FLOOR_THICKNESS / 2.0),
-        (3600.0, 3400.0, FLOOR_THICKNESS),
+        (5200.0, 4600.0, FLOOR_THICKNESS),
         floor_material,
     )
 
     # Thin, non-colliding color pads distinguish research areas without
     # affecting character movement or NavMesh generation.
-    cube("RoomA_ColorPad", (-1400, 1100, 1), (780, 680, 2), room_a_material, False)
-    cube("RoomB_ColorPad", (1400, 1200, 1), (680, 580, 2), room_b_material, False)
-    cube("RoomC_ColorPad", (1400, -1100, 1), (780, 680, 2), room_c_material, False)
-    cube("Junction_ColorPad", (0, 0, 1), (900, 900, 2), junction_material, False)
+    cube("RoomA_ColorPad", (-1900, 1600, 1), (780, 680, 2), room_a_material, False)
+    cube("RoomB_ColorPad", (1900, 1650, 1), (680, 580, 2), room_b_material, False)
+    cube("RoomC_ColorPad", (1900, -1500, 1), (780, 680, 2), room_c_material, False)
+    cube("Junction_ColorPad", (0, 0, 1), (1100, 1000, 2), junction_material, False)
 
     # Outer perimeter, with generous playable clearance.
-    wall("Wall_South", 0, -1700, 3600, True)
-    wall("Wall_North", 0, 1700, 3600, True)
-    wall("Wall_West", -1800, 0, 3400, False)
-    wall("Wall_East", 1800, 0, 3400, False)
+    wall("Wall_South", 0, -2300, 5200, True)
+    wall("Wall_North", 0, 2300, 5200, True)
+    wall("Wall_West", -2600, 0, 4600, False)
+    wall("Wall_East", 2600, 0, 4600, False)
 
     # Northwest Room A (about 800 x 700), open south and east approaches.
-    wall("RoomA_SouthWest", -1400, 500, 400, True)
-    wall("RoomA_EastNorth", -950, 1250, 500, False)
-    wall("RoomA_EastSouth", -950, 650, 300, False)
+    wall("RoomA_North", -1900, 1950, 800, True)
+    wall("RoomA_West", -2300, 1600, 700, False)
+    wall("RoomA_SouthWest", -2150, 1250, 300, True)
+    wall("RoomA_SouthEast", -1650, 1250, 300, True)
+    wall("RoomA_EastNorth", -1500, 1800, 300, False)
+    wall("RoomA_EastSouth", -1500, 1400, 200, False)
     cube(
         "RoomA_CentralObstacle",
-        (-1400, 1050, 175),
-        (300, 250, 350),
+        (-1900, 1600, 175),
+        (350, 280, 350),
         room_a_material,
     )
 
     # Northeast Room B (about 700 x 600): narrow west gap, wide south route.
-    wall("RoomB_WestNorth", 950, 1400, 400, False)
-    wall("RoomB_WestSouth", 950, 750, 300, False)
-    wall("RoomB_SouthEast", 1400, 650, 800, True)
-    wall("RoomB_LShape_A", 1350, 1150, 350, True)
-    wall("RoomB_LShape_B", 1525, 1000, 300, False)
+    wall("RoomB_North", 1900, 1950, 700, True)
+    wall("RoomB_East", 2250, 1650, 600, False)
+    wall("RoomB_WestNorth", 1550, 1850, 200, False)
+    wall("RoomB_WestSouth", 1550, 1450, 200, False)
+    wall("RoomB_SouthEast", 2075, 1350, 350, True)
+    wall("RoomB_LShape_A", 1900, 1650, 350, True)
+    wall("RoomB_LShape_B", 2075, 1500, 300, False)
 
     # Southeast Room C (about 800 x 700), exits to north and west.
-    wall("RoomC_NorthEast", 1400, -450, 800, True)
-    wall("RoomC_WestNorth", 950, -650, 400, False)
-    wall("RoomC_WestSouth", 950, -1350, 300, False)
+    wall("RoomC_South", 1900, -1850, 800, True)
+    wall("RoomC_East", 2300, -1500, 700, False)
+    wall("RoomC_NorthWest", 1650, -1150, 300, True)
+    wall("RoomC_NorthEast", 2150, -1150, 300, True)
+    wall("RoomC_WestNorth", 1500, -1300, 300, False)
+    wall("RoomC_WestSouth", 1500, -1700, 200, False)
     cube(
         "RoomC_CentralObstacle",
-        (1400, -1050, 175),
-        (300, 300, 350),
+        (1900, -1500, 175),
+        (350, 300, 350),
         room_c_material,
     )
 
-    # Central routing walls create two loops and block spawn-to-player sight.
-    wall("Junction_SightBlock", 0, -650, 650, True)
-    wall("West_RouteDivider", -650, 0, 700, False)
-    wall("North_RouteDivider", 0, 500, 650, True)
-    wall("East_RouteDivider", 650, 0, 700, False)
-    wall("Seeker_Start_Screen", 0, -1250, 600, True)
+    # Central and wing dividers produce several interconnected loops. Every
+    # wall has generous clearance around both ends for the default Character.
+    wall("Junction_SouthBlock", 0, -650, 800, True)
+    wall("Junction_NorthBlock", 0, 650, 800, True)
+    wall("West_RouteDivider", -750, 0, 1100, False)
+    wall("East_RouteDivider", 750, 0, 1100, False)
+    wall("Northwest_CrossRoute", -950, 1050, 700, True)
+    wall("Northeast_CrossRoute", 950, 1050, 700, True)
+    wall("WestWing_UpperDivider", -1750, 650, 750, True)
+    wall("WestWing_LowerDivider", -1750, -600, 750, True)
+    wall("EastWing_MidDivider", 1500, 500, 900, False)
+    wall("EastWing_LowerDivider", 1450, -650, 850, True)
+    wall("Southwest_Island_A", -1500, -1450, 650, True)
+    wall("Southwest_Island_B", -1175, -1600, 300, False)
+    wall("South_CenterDivider_West", -700, -1450, 500, False)
+    wall("South_CenterDivider_East", 700, -1450, 500, False)
+    wall("Seeker_Start_Screen", 0, -1850, 700, True)
 
     # Named research zones. Trigger extents remain clear of walls.
-    zone("Room_A", (-1400, 1100, 100), (400, 350, 100), unreal.Color(80, 180, 255))
-    zone("Room_B", (1400, 1200, 100), (350, 300, 100), unreal.Color(255, 170, 60))
-    zone("Room_C", (1400, -1100, 100), (400, 350, 100), unreal.Color(100, 230, 120))
-    zone("Central_Junction", (0, 0, 100), (500, 500, 100), unreal.Color(255, 255, 80))
-    zone("Seeker_Start", (0, -1450, 100), (300, 250, 100), unreal.Color(255, 80, 80))
+    zone("Room_A", (-1900, 1600, 100), (400, 350, 100), unreal.Color(80, 180, 255))
+    zone("Room_B", (1900, 1650, 100), (350, 300, 100), unreal.Color(255, 170, 60))
+    zone("Room_C", (1900, -1500, 100), (400, 350, 100), unreal.Color(100, 230, 120))
+    zone("Central_Junction", (0, 0, 100), (550, 500, 100), unreal.Color(255, 255, 80))
+    zone("Seeker_Start", (0, -2050, 100), (300, 250, 100), unreal.Color(255, 80, 80))
 
-    player_start = spawn(unreal.PlayerStart, "Hider_PlayerStart", (-1400, 1250, 100))
+    player_start = spawn(unreal.PlayerStart, "Hider_PlayerStart", (-2050, 1750, 100))
     player_start.set_actor_rotation(unreal.Rotator(0, -90, 0), False)
-    marker("Seeker_Spawn", (0, -1450, 100), unreal.Color(255, 50, 50))
-    marker("HidingSpot_A", (-1600, 1450, 50), unreal.Color(80, 180, 255))
-    marker("HidingSpot_B", (1600, 1450, 50), unreal.Color(255, 170, 60))
-    marker("HidingSpot_C", (1600, -1450, 50), unreal.Color(100, 230, 120))
+    marker("Seeker_Spawn", (0, -2050, 100), unreal.Color(255, 50, 50))
+    marker("HidingSpot_A", (-2100, 1800, 50), unreal.Color(80, 180, 255))
+    marker("HidingSpot_B", (2100, 1800, 50), unreal.Color(255, 170, 60))
+    marker("HidingSpot_C", (2100, -1700, 50), unreal.Color(100, 230, 120))
     if SHOW_DEBUG_LABELS:
-        marker("Hider_Start_Debug", (-1400, 1250, 100), unreal.Color(80, 255, 255), "HIDER START")
+        marker("Hider_Start_Debug", (-2050, 1750, 100), unreal.Color(80, 255, 255), "HIDER START")
 
     nav = spawn(unreal.NavMeshBoundsVolume, "Maze_NavMeshBounds", (0, 0, 200))
-    nav.set_actor_scale3d(unreal.Vector(18.0, 17.0, 4.0))
+    nav.set_actor_scale3d(unreal.Vector(26.0, 23.0, 4.0))
 
     sun = spawn(
         unreal.DirectionalLight,
