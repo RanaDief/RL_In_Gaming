@@ -16,7 +16,57 @@ SHOW_DEBUG_LABELS = True
 
 CUBE = unreal.load_asset("/Engine/BasicShapes/Cube")
 GREY_MATERIAL = unreal.load_asset("/Engine/BasicShapes/BasicShapeMaterial")
+WALL_MATERIAL = GREY_MATERIAL
 EDITOR_ACTOR_SUBSYSTEM = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
+
+
+def color_material(name, color):
+    """Create or reuse a persistent, unlit-looking greybox color material."""
+    package_path = "/Game/MazeHunt/Materials"
+    asset_path = "{}/{}".format(package_path, name)
+    existing = unreal.load_asset(asset_path)
+    if existing:
+        return existing
+
+    asset_tools = unreal.AssetToolsHelpers.get_asset_tools()
+    material = asset_tools.create_asset(
+        name,
+        package_path,
+        unreal.Material,
+        unreal.MaterialFactoryNew(),
+    )
+    if not material:
+        raise RuntimeError("Could not create material {}".format(asset_path))
+
+    base_color = unreal.MaterialEditingLibrary.create_material_expression(
+        material,
+        unreal.MaterialExpressionConstant3Vector,
+        -220,
+        0,
+    )
+    base_color.set_editor_property("constant", color)
+    unreal.MaterialEditingLibrary.connect_material_property(
+        base_color,
+        "",
+        unreal.MaterialProperty.MP_BASE_COLOR,
+    )
+
+    roughness = unreal.MaterialEditingLibrary.create_material_expression(
+        material,
+        unreal.MaterialExpressionConstant,
+        -220,
+        120,
+    )
+    roughness.set_editor_property("r", 0.85)
+    unreal.MaterialEditingLibrary.connect_material_property(
+        roughness,
+        "",
+        unreal.MaterialProperty.MP_ROUGHNESS,
+    )
+
+    unreal.MaterialEditingLibrary.recompile_material(material)
+    unreal.EditorAssetLibrary.save_loaded_asset(material)
+    return material
 
 
 def spawn(actor_class, name, location, rotation=None):
@@ -30,14 +80,14 @@ def spawn(actor_class, name, location, rotation=None):
     return actor
 
 
-def cube(name, location, size, material=GREY_MATERIAL):
+def cube(name, location, size, material=GREY_MATERIAL, collision=True):
     actor = spawn(unreal.StaticMeshActor, name, location)
     component = actor.static_mesh_component
     component.set_static_mesh(CUBE)
     component.set_world_scale3d(
         unreal.Vector(size[0] / 100.0, size[1] / 100.0, size[2] / 100.0)
     )
-    component.set_collision_profile_name("BlockAll")
+    component.set_collision_profile_name("BlockAll" if collision else "NoCollision")
     component.set_mobility(unreal.ComponentMobility.STATIC)
     if material:
         component.set_material(0, material)
@@ -50,7 +100,7 @@ def wall(name, x, y, length, along_x=True):
         if along_x
         else (WALL_THICKNESS, length, WALL_HEIGHT)
     )
-    return cube(name, (x, y, WALL_HEIGHT / 2.0), size)
+    return cube(name, (x, y, WALL_HEIGHT / 2.0), size, WALL_MATERIAL)
 
 
 def marker(name, location, color, text=None):
@@ -93,14 +143,43 @@ def clear_or_create_level():
 
 
 def build():
+    global WALL_MATERIAL
+
     clear_or_create_level()
+
+    WALL_MATERIAL = color_material(
+        "M_Maze_WallGrey", unreal.LinearColor(0.32, 0.35, 0.40, 1.0)
+    )
+    floor_material = color_material(
+        "M_Maze_FloorDark", unreal.LinearColor(0.08, 0.09, 0.11, 1.0)
+    )
+    room_a_material = color_material(
+        "M_Maze_RoomA_Blue", unreal.LinearColor(0.05, 0.30, 0.80, 1.0)
+    )
+    room_b_material = color_material(
+        "M_Maze_RoomB_Orange", unreal.LinearColor(0.90, 0.25, 0.04, 1.0)
+    )
+    room_c_material = color_material(
+        "M_Maze_RoomC_Green", unreal.LinearColor(0.04, 0.60, 0.18, 1.0)
+    )
+    junction_material = color_material(
+        "M_Maze_Junction_Yellow", unreal.LinearColor(0.85, 0.65, 0.03, 1.0)
+    )
 
     # One continuous 3600 x 3400 floor. Coordinates: north is +Y.
     cube(
         "Maze_Floor",
         (0.0, 0.0, -FLOOR_THICKNESS / 2.0),
         (3600.0, 3400.0, FLOOR_THICKNESS),
+        floor_material,
     )
+
+    # Thin, non-colliding color pads distinguish research areas without
+    # affecting character movement or NavMesh generation.
+    cube("RoomA_ColorPad", (-1400, 1100, 1), (780, 680, 2), room_a_material, False)
+    cube("RoomB_ColorPad", (1400, 1200, 1), (680, 580, 2), room_b_material, False)
+    cube("RoomC_ColorPad", (1400, -1100, 1), (780, 680, 2), room_c_material, False)
+    cube("Junction_ColorPad", (0, 0, 1), (900, 900, 2), junction_material, False)
 
     # Outer perimeter, with generous playable clearance.
     wall("Wall_South", 0, -1700, 3600, True)
@@ -112,7 +191,12 @@ def build():
     wall("RoomA_SouthWest", -1400, 500, 400, True)
     wall("RoomA_EastNorth", -950, 1250, 500, False)
     wall("RoomA_EastSouth", -950, 650, 300, False)
-    cube("RoomA_CentralObstacle", (-1400, 1050, 175), (300, 250, 350))
+    cube(
+        "RoomA_CentralObstacle",
+        (-1400, 1050, 175),
+        (300, 250, 350),
+        room_a_material,
+    )
 
     # Northeast Room B (about 700 x 600): narrow west gap, wide south route.
     wall("RoomB_WestNorth", 950, 1400, 400, False)
@@ -125,7 +209,12 @@ def build():
     wall("RoomC_NorthEast", 1400, -450, 800, True)
     wall("RoomC_WestNorth", 950, -650, 400, False)
     wall("RoomC_WestSouth", 950, -1350, 300, False)
-    cube("RoomC_CentralObstacle", (1400, -1050, 175), (300, 300, 350))
+    cube(
+        "RoomC_CentralObstacle",
+        (1400, -1050, 175),
+        (300, 300, 350),
+        room_c_material,
+    )
 
     # Central routing walls create two loops and block spawn-to-player sight.
     wall("Junction_SightBlock", 0, -650, 650, True)
