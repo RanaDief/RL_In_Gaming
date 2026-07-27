@@ -12,7 +12,7 @@ WALL_HEIGHT = 350.0
 WALL_THICKNESS = 50.0
 CORRIDOR_WIDTH = 350.0
 FLOOR_THICKNESS = 20.0
-SHOW_DEBUG_LABELS = True
+SHOW_DEBUG_LABELS = False
 
 CUBE = unreal.load_asset("/Engine/BasicShapes/Cube")
 GREY_MATERIAL = unreal.load_asset("/Engine/BasicShapes/BasicShapeMaterial")
@@ -110,7 +110,7 @@ def marker(name, location, color, text=None):
             unreal.TextRenderActor,
             name + "_Label",
             (location[0], location[1], location[2] + 120.0),
-            unreal.Rotator(90.0, 0.0, 0.0),
+            unreal.Rotator(90.0, 90.0, 0.0),
         )
         component = label.text_render
         component.set_text(text or name)
